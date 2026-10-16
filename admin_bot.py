@@ -1,6 +1,6 @@
 """
-Admin Bot — তুমি (Admin) ব্যবহার করবে
-- ক্যাটাগরি ম্যানেজমেন্ট (Add/Edit/Delete)
+Admin Bot — অ্যাডমিনের জন্য
+- ক্যাটাগরি ম্যানেজমেন্ট
 - রিপোর্ট আপলোড (অটো প্রসেস)
 - সাবমিশন রিসিভ
 - পরিসংখ্যান
@@ -26,9 +26,9 @@ from datetime import datetime
 import os
 import logging
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
-# States
+# Conversation States
 (ADD_CAT_NAME, ADD_CAT_COLUMNS,
  ADD_SUB_NAME, ADD_SUB_RATE,
  RENAME_CAT, EDIT_COLUMNS) = range(6)
@@ -37,7 +37,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 def admin_menu():
     kb = [
         [KeyboardButton("📁 ক্যাটাগরি ম্যানেজ"), KeyboardButton("📤 রিপোর্ট আপলোড")],
-        [KeyboardButton("📊 পরিসংখ্যান"), KeyboardButton("📥 পেন্ডিং সাবমিশন")],
+        [KeyboardButton("📊 পরিসংখ্যান")],
     ]
     return ReplyKeyboardMarkup(kb, resize_keyboard=True)
 
@@ -46,7 +46,9 @@ def back_kb():
     return ReplyKeyboardMarkup([["🔙 মেইন মেনু"]], resize_keyboard=True)
 
 
-# ==================== /start ====================
+# ═══════════════════════════════════════
+#  /start
+# ═══════════════════════════════════════
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         await update.message.reply_text("❌ আপনি অ্যাডমিন নন।")
@@ -58,7 +60,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ==================== 📁 ক্যাটাগরি ম্যানেজ ====================
+# ═══════════════════════════════════════
+#  📁 ক্যাটাগরি ম্যানেজ
+# ═══════════════════════════════════════
 async def cat_manage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
@@ -106,7 +110,9 @@ async def cat_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    reply_markup=InlineKeyboardMarkup(keyboard))
 
 
-# ==================== নতুন ক্যাটাগরি ====================
+# ═══════════════════════════════════════
+#  নতুন ক্যাটাগরি
+# ═══════════════════════════════════════
 async def add_cat_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -153,7 +159,9 @@ async def add_cat_columns(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
-# ==================== সাব-ক্যাটাগরি ====================
+# ═══════════════════════════════════════
+#  সাব-ক্যাটাগরি
+# ═══════════════════════════════════════
 async def addsub_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -199,7 +207,9 @@ async def addsub_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
-# ==================== রিনেম / কলাম ====================
+# ═══════════════════════════════════════
+#  রিনেম / কলাম
+# ═══════════════════════════════════════
 async def rename_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -245,7 +255,9 @@ async def cols_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
-# ==================== Callback Router ====================
+# ═══════════════════════════════════════
+#  Callback Router
+# ═══════════════════════════════════════
 async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
@@ -264,14 +276,6 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📁 **ক্যাটাগরি ম্যানেজমেন্ট**",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-        return
-
-    if data == "add_cat":
-        await query.answer()
-        await query.message.reply_text(
-            "📝 **নতুন ক্যাটাগরির নাম লিখুন**",
-            reply_markup=back_kb()
         )
         return
 
@@ -300,11 +304,12 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer()
         return
 
-    # Unknown
     await query.answer()
 
 
-# ==================== 📤 রিপোর্ট আপলোড ====================
+# ═══════════════════════════════════════
+#  📤 রিপোর্ট আপলোড
+# ═══════════════════════════════════════
 async def report_upload_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
@@ -351,10 +356,9 @@ async def handle_report_file(update: Update, context: ContextTypes.DEFAULT_TYPE)
     total_ok = sum(1 for v in report_data.values() if v == "ok")
     total_of = sum(1 for v in report_data.values() if v == "of")
 
-    # ⭐ প্রসেস
     detail_results = process_report_detailed(report_data)
 
-    # ⭐ প্রতিটা আইডির জন্য নোটিফিকেশন কিউ
+    # প্রতিটা আইডির জন্য নোটিফিকেশন কিউ
     queued = 0
     for user_id, data in detail_results.items():
         for uid, status in data["results"]:
@@ -365,7 +369,6 @@ async def handle_report_file(update: Update, context: ContextTypes.DEFAULT_TYPE)
             queue_notification(user_id, msg_text)
             queued += 1
 
-        # সামারি
         summary = (
             f"📊 **আপনার রিপোর্ট সামারি**\n"
             f"━━━━━━━━━━━━━━━\n"
@@ -379,7 +382,6 @@ async def handle_report_file(update: Update, context: ContextTypes.DEFAULT_TYPE)
         queue_notification(user_id, summary)
         queued += 1
 
-    # অ্যাডমিনকে সামারি
     summary_text = (
         f"✅ **রিপোর্ট প্রসেস সম্পন্ন!**\n"
         f"━━━━━━━━━━━━━━━━━━━\n\n"
@@ -407,7 +409,9 @@ async def handle_report_file(update: Update, context: ContextTypes.DEFAULT_TYPE)
         pass
 
 
-# ==================== 📊 পরিসংখ্যান ====================
+# ═══════════════════════════════════════
+#  📊 পরিসংখ্যান
+# ═══════════════════════════════════════
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
@@ -424,9 +428,11 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ==================== MAIN ====================
-def main():
-    init_db()
+# ═══════════════════════════════════════
+#  BUILD ADMIN APP
+# ═══════════════════════════════════════
+def build_admin_app():
+    """Admin Bot Application বানায় (main.py থেকে কল হবে)"""
     app = ApplicationBuilder().token(ADMIN_BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -436,7 +442,7 @@ def main():
     app.add_handler(MessageHandler(filters.Regex("^📊 পরিসংখ্যান$"), stats))
     app.add_handler(MessageHandler(filters.Regex("^📤 রিপোর্ট আপলোড$"), report_upload_prompt))
 
-    # Report file handle
+    # Report file (শুধু Admin থেকে)
     app.add_handler(MessageHandler(
         filters.Document.ALL & filters.User(ADMIN_ID),
         handle_report_file
@@ -483,9 +489,12 @@ def main():
     # Other callbacks
     app.add_handler(CallbackQueryHandler(callback_router))
 
-    logging.info("👑 Admin Bot চালু...")
-    app.run_polling(drop_pending_updates=True)
+    return app
 
 
+# Local testing
 if __name__ == "__main__":
-    main()
+    init_db()
+    app = build_admin_app()
+    logger.info("👑 Admin Bot চালু...")
+    app.run_polling(drop_pending_updates=True)

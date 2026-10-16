@@ -1,10 +1,6 @@
 """
 User Bot — ইউজারদের জন্য
-- ফাইল সাবমিট
-- ব্যালেন্স
-- উইথড্র
-- রিপোর্ট
-- সাপোর্ট
+- ফাইল সাবমিট, ব্যালেন্স, উইথড্র, রিপোর্ট, সাপোর্ট
 - Background Notification Worker
 """
 from telegram import (
@@ -27,7 +23,7 @@ import os
 import asyncio
 import logging
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def main_menu():
@@ -43,7 +39,9 @@ def back_kb():
     return ReplyKeyboardMarkup([["🔙 মেইন মেনু"]], resize_keyboard=True)
 
 
-# ==================== /start ====================
+# ═══════════════════════════════════════
+#  /start
+# ═══════════════════════════════════════
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     add_user(update.effective_user)
     await update.message.reply_text(
@@ -54,7 +52,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ==================== 📊 ফাইল সাবমিট ====================
+# ═══════════════════════════════════════
+#  📊 ফাইল সাবমিট
+# ═══════════════════════════════════════
 async def file_submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cats = get_all_categories()
     if not cats:
@@ -137,7 +137,9 @@ async def noop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.callback_query.answer()
 
 
-# ==================== ফাইল রিসিভ ====================
+# ═══════════════════════════════════════
+#  ফাইল রিসিভ
+# ═══════════════════════════════════════
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     msg = update.message
@@ -220,7 +222,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
     except Exception as e:
-        logging.error(f"Admin notify error: {e}")
+        logger.error(f"Admin notify error: {e}")
 
     try:
         os.remove(local_path)
@@ -228,7 +230,9 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass
 
 
-# ==================== 💵 ব্যালেন্স ====================
+# ═══════════════════════════════════════
+#  💵 ব্যালেন্স
+# ═══════════════════════════════════════
 async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     row = get_user(user.id)
@@ -253,7 +257,9 @@ async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=main_menu())
 
 
-# ==================== 📋 আমার রিপোর্ট ====================
+# ═══════════════════════════════════════
+#  📋 আমার রিপোর্ট
+# ═══════════════════════════════════════
 async def my_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     rows = get_user_report(user.id)
@@ -294,7 +300,9 @@ async def my_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=main_menu())
 
 
-# ==================== 💸 উইথড্র ====================
+# ═══════════════════════════════════════
+#  💸 উইথড্র
+# ═══════════════════════════════════════
 async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     row = get_user(update.effective_user.id)
     bal = row[3] if row else 0
@@ -356,7 +364,9 @@ async def withdraw_handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ==================== ℹ️ সাপোর্ট ====================
+# ═══════════════════════════════════════
+#  ℹ️ সাপোর্ট
+# ═══════════════════════════════════════
 async def support_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "ℹ️ **সাপোর্ট**\n\nআপনার সমস্যা লিখুন।",
@@ -385,9 +395,10 @@ async def support_handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ পাঠানো হয়েছে।", reply_markup=main_menu())
 
 
-# ==================== Notification Worker ====================
+# ═══════════════════════════════════════
+#  Notification Worker
+# ═══════════════════════════════════════
 async def notification_worker(context: ContextTypes.DEFAULT_TYPE):
-    """প্রতি ৩ সেকেন্ডে কিউ চেক করে মেসেজ পাঠায়"""
     try:
         pending = get_pending_notifications(limit=20)
         for notif_id, user_id, message in pending:
@@ -398,17 +409,19 @@ async def notification_worker(context: ContextTypes.DEFAULT_TYPE):
                     parse_mode="Markdown"
                 )
                 mark_notification_sent(notif_id)
-                await asyncio.sleep(0.5)  # Rate limit protection
+                await asyncio.sleep(0.5)
             except Exception as e:
-                logging.warning(f"Notify {user_id} failed: {e}")
+                logger.warning(f"Notify {user_id} failed: {e}")
                 mark_notification_sent(notif_id)
     except Exception as e:
-        logging.error(f"Worker error: {e}")
+        logger.error(f"Worker error: {e}")
 
 
-# ==================== MAIN ====================
-def main():
-    init_db()
+# ═══════════════════════════════════════
+#  BUILD USER APP
+# ═══════════════════════════════════════
+def build_user_app():
+    """User Bot Application বানায় (main.py থেকে কল হবে)"""
     app = ApplicationBuilder().token(USER_BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -419,22 +432,27 @@ def main():
     app.add_handler(MessageHandler(filters.Regex("^ℹ️ সাপোর্ট$"), support_start))
 
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
-    app.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & ~filters.Regex("^🔙 মেইন মেনু$"),
-        support_handle
-    ))
 
     app.add_handler(CallbackQueryHandler(user_cat_click, pattern="^ucat_"))
     app.add_handler(CallbackQueryHandler(user_sub_click, pattern="^usub_"))
     app.add_handler(CallbackQueryHandler(user_cancel, pattern="^ucancel$"))
     app.add_handler(CallbackQueryHandler(noop, pattern="^noop$"))
 
-    # ⭐ Notification Worker — প্রতি ৩ সেকেন্ডে
+    # Withdraw & Support text handler (শেষে রাখতে হবে)
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & ~filters.Regex("^🔙 মেইন মেনু$"),
+        support_handle
+    ))
+
+    # Notification worker — প্রতি ৩ সেকেন্ডে
     app.job_queue.run_repeating(notification_worker, interval=3, first=5)
 
-    logging.info("👤 User Bot চালু...")
-    app.run_polling(drop_pending_updates=True)
+    return app
 
 
+# Local testing
 if __name__ == "__main__":
-    main()
+    init_db()
+    app = build_user_app()
+    logger.info("👤 User Bot চালু...")
+    app.run_polling(drop_pending_updates=True)

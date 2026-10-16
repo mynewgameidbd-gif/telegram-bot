@@ -8,8 +8,8 @@ import os
 # Render এ Environment Variable হিসেবে সেট করবে
 # Local এ চালাতে চাইলে .env ফাইলে রাখবে
 
-USER_BOT_TOKEN = os.environ.get("8947059922:AAHHJlU8FrzE86RKm8M4pJ5yP4wCXUcqrLc", "")
-ADMIN_BOT_TOKEN = os.environ.get("8969451047:AAEtBROQDxDB-8FniVTr5-WYGzcmt_K-Ijc", "")
+USER_BOT_TOKEN = os.environ.get("USER_BOT_TOKEN", "")
+ADMIN_BOT_TOKEN = os.environ.get("ADMIN_BOT_TOKEN", "")
 
 # ============ ADMIN ID ============
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))

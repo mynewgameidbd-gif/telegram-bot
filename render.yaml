@@ -1,1 +1,26 @@
+services:
+  - type: worker
+    name: user-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python user_bot.py
+    envVars:
+      - key: USER_BOT_TOKEN
+        sync: false
+      - key: ADMIN_BOT_TOKEN
+        sync: false
+      - key: ADMIN_ID
+        sync: false
 
+  - type: worker
+    name: admin-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python admin_bot.py
+    envVars:
+      - key: USER_BOT_TOKEN
+        sync: false
+      - key: ADMIN_BOT_TOKEN
+        sync: false
+      - key: ADMIN_ID
+        sync: false
